@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NutriNova AI - Advanced AI-powered food and nutrition analysis platform">
+  <title>NutriNova AI — Intelligent Nutrition Analysis</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-void:    #03050f;
+      --bg-surface: #0b0f1e;
+      --bg-raised:  #111629;
+
+      --teal:   #00ffc8;
+      --blue:   #0ea5ff;
+      --lime:   #a8ff3e;
+      --purple: #b06eff;
+
+      /* VISIBILITY: all text levels boosted */
+      --text-bright: #ffffff;
+      --text-body:   #d4deff;
+      --text-muted:  #8fa3cc;
+      --text-ghost:  #56698a;
+
+      --border-dim:    rgba(0,255,200,0.10);
+      --border-mid:    rgba(0,255,200,0.22);
+      --border-bright: rgba(0,255,200,0.45);
+
+      --radius-sm: 10px;
+      --radius-md: 18px;
+      --radius-lg: 28px;
+
+      --nav-h: 72px;
+      --spring: cubic-bezier(0.34,1.56,0.64,1);
+      --out:    cubic-bezier(0.16,1,0.3,1);
+
+      --font-display: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+      --font-mono:    'DM Mono', monospace;
+
+      --shadow-card: 0 24px 60px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.5);
+      --glow: 0 0 40px rgba(0,255,200,0.18), 0 0 80px rgba(14,165,255,0.09);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-void);
+      color: var(--text-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-top: var(--nav-h);
+      -webkit-font-smoothing: antialiased;
+      cursor: none;
+    }
+
+    ::selection { background: rgba(0,255,200,0.25); color:#fff; }
+    :focus-visible { outline: 2px solid var(--teal); outline-offset:3px; }
+
+    /* ─── CUSTOM CURSOR ─── */
+    .cur-dot {
+      position:fixed; width:8px; height:8px;
+      background:var(--teal); border-radius:50%;
+      pointer-events:none; z-index:9999;
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 12px var(--teal), 0 0 28px rgba(0,255,200,0.5);
+    }
+    .cur-ring {
+      position:fixed; width:38px; height:38px;
+      border:1.5px solid rgba(0,255,200,0.55);
+      border-radius:50%; pointer-events:none; z-index:9998;
+      transform:translate(-50%,-50%);
+      transition:width .3s var(--spring), height .3s var(--spring), border-color .3s;
+    }
+    .cur-ring.big { width:58px; height:58px; border-color:rgba(0,255,200,0.9); }
+
+    /* ─── CANVAS ─── */
+    #bgCanvas { position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+    /* ─── AURORA BLOBS ─── */
+    .aurora { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+    .aurora-blob { position:absolute; border-radius:50%; filter:blur(120px); mix-blend-mode:screen; animation:aurora-drift 18s ease-in-out infinite; }
+    .ab1 { width:700px;height:700px; background:rgba(0,255,200,0.06); top:-20%;left:-15%; animation-delay:0s; }
+    .ab2 { width:600px;height:600px; background:rgba(14,165,255,0.07); bottom:-20%;right:-15%; animation-delay:5s; }
+    .ab3 { width:500px;height:500px; background:rgba(168,255,62,0.04); top:40%;right:20%; animation-delay:10s; }
+    .ab4 { width:400px;height:400px; background:rgba(176,110,255,0.05); bottom:20%;left:25%; animation-delay:7s; }
+    @keyframes aurora-drift {
+      0%,100%{ transform:translate(0,0) scale(1); }
+      33%{ transform:translate(80px,100px) scale(1.12); }
+      66%{ transform:translate(-60px,50px) scale(0.92); }
+    }
+
+    /* ─── NAVBAR ─── */
+    .navbar { position:fixed; top:0; left:0; right:0; height:var(--nav-h); z-index:1000; }
+    .navbar::before {
+      content:''; position:absolute; inset:0;
+      background:rgba(3,5,15,0.55);
+      backdrop-filter:blur(28px) saturate(160%);
+      -webkit-backdrop-filter:blur(28px) saturate(160%);
+      border-bottom:1px solid var(--border-dim);
+      transition:border-color .4s, background .4s;
+    }
+    .navbar.scrolled::before { background:rgba(3,5,15,0.88); border-color:var(--border-mid); }
+
+    .nav-inner {
+      position:relative; max-width:1360px; margin:0 auto;
+      padding:0 40px; height:100%;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .nav-brand { display:flex; align-items:center; gap:14px; text-decoration:none; }
+    .nav-hex {
+      width:44px; height:44px;
+      background:linear-gradient(135deg,var(--teal),var(--blue));
+      clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display:flex; align-items:center; justify-content:center; font-size:1.3em;
+      animation:hex-pulse 3s ease-in-out infinite;
+      transition:transform .4s var(--spring);
+    }
+    .nav-brand:hover .nav-hex { transform:rotate(30deg) scale(1.1); }
+    @keyframes hex-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,255,200,0.4);} 50%{box-shadow:0 0 0 14px rgba(0,255,200,0);} }
+
+    .nav-wordmark { display:flex; flex-direction:column; gap:1px; }
+    .nav-name { font-family:var(--font-display); font-size:1.25em; font-weight:800; color:var(--text-bright); letter-spacing:-.5px; line-height:1; }
+    .nav-name span { color:var(--teal); }
+    .nav-tag { font-family:var(--font-mono); font-size:.6em; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; }
+
+    .nav-links { display:flex; align-items:center; gap:6px; list-style:none; }
+    .nav-links a { font-size:.875em; font-weight:500; color:var(--text-muted); text-decoration:none; padding:8px 16px; border-radius:var(--radius-sm); transition:color .25s, background .25s; }
+    .nav-links a:hover, .nav-links a.active { color:var(--text-bright); background:rgba(0,255,200,0.08); }
+    .nav-cta {
+      padding:10px 22px !important;
+      background:linear-gradient(135deg,rgba(0,255,200,0.12),rgba(14,165,255,0.12)) !important;
+      border:1px solid var(--border-mid) !important;
+      color:var(--teal) !important; font-weight:700 !important;
+      position:relative; overflow:hidden;
+    }
+    .nav-cta::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--teal),var(--blue)); opacity:0; transition:opacity .3s; }
+    .nav-cta:hover::before { opacity:.18; }
+    .nav-cta:hover { border-color:var(--border-bright) !important; box-shadow:0 0 22px rgba(0,255,200,0.22) !important; }
+    .nav-cta-text { position:relative; z-index:1; }
+
+    .mob-btn { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:6px; }
+    .mob-btn span { display:block; width:24px; height:2px; background:var(--text-body); border-radius:2px; transition:all .35s var(--spring); }
+    .mob-btn.open span:nth-child(1){ transform:rotate(45deg) translate(7px,7px); }
+    .mob-btn.open span:nth-child(2){ opacity:0; transform:scaleX(0); }
+    .mob-btn.open span:nth-child(3){ transform:rotate(-45deg) translate(7px,-7px); }
+
+    /* ─── PAGE WRAP ─── */
+    .page-wrap { position:relative; z-index:1; max-width:1360px; margin:0 auto; padding:0 40px 100px; }
+
+    /* ─── HERO ─── */
+    .hero { text-align:center; padding:100px 0 80px; }
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:10px;
+      padding:8px 22px;
+      background:rgba(0,255,200,0.07); border:1px solid var(--border-mid);
+      border-radius:100px;
+      font-family:var(--font-mono); font-size:.72em; color:var(--teal);
+      letter-spacing:2px; text-transform:uppercase; margin-bottom:32px;
+      animation:fadeUp .8s var(--out) both;
+    }
+    .live-dot { width:7px; height:7px; background:var(--teal); border-radius:50%; box-shadow:0 0 8px var(--teal); animation:blink 2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.15;} }
+
+    .hero-title {
+      font-family:var(--font-display); font-size:clamp(2.8em,6vw,5.5em);
+      font-weight:800; color:var(--text-bright); line-height:1; letter-spacing:-2px;
+      margin-bottom:24px; animation:fadeUp .8s .1s var(--out) both;
+    }
+    .grad {
+      display:inline-block;
+      background:linear-gradient(135deg,var(--teal) 0%,var(--blue) 45%,var(--lime) 100%);
+      background-size:200% 200%;
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      animation:gflow 4s ease infinite;
+    }
+    @keyframes gflow { 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+
+    .hero-sub { font-size:1.18em; color:var(--text-body); max-width:520px; margin:0 auto 48px; line-height:1.75; font-weight:300; animation:fadeUp .8s .2s var(--out) both; }
+    .hero-badges { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; animation:fadeUp .8s .3s var(--out) both; }
+    .badge {
+      display:inline-flex; align-items:center; gap:8px; padding:8px 18px;
+      background:rgba(11,15,30,0.9); border:1px solid var(--border-dim);
+      border-radius:100px; font-size:.8em; color:var(--text-body); font-weight:500;
+      transition:all .3s;
+    }
+    .badge:hover { border-color:var(--border-bright); color:var(--text-bright); transform:translateY(-2px); }
+    .badge i { color:var(--teal); }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:1px; background:var(--border-dim);
+      border:1px solid var(--border-dim); border-radius:var(--radius-md);
+      overflow:hidden; margin-bottom:32px;
+      animation:fadeUp .8s .35s var(--out) both;
+    }
+    .stat-cell { background:rgba(11,15,30,0.97); padding:26px; text-align:center; transition:background .3s; position:relative; overflow:hidden; }
+    .stat-cell::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(0,255,200,0.05),transparent); opacity:0; transition:opacity .3s; }
+    .stat-cell:hover::after { opacity:1; }
+    .stat-num { font-family:var(--font-display); font-size:2em; font-weight:800; color:var(--text-bright); line-height:1; margin-bottom:6px; }
+    .stat-num span { color:var(--teal); }
+    .stat-lbl { font-family:var(--font-mono); font-size:.68em; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; }
+
+    /* ─── CARD ─── */
+    .card {
+      background:linear-gradient(145deg,rgba(17,22,41,0.95),rgba(11,15,30,0.98));
+      border:1px solid var(--border-dim); border-radius:var(--radius-lg); padding:48px;
+      box-shadow:var(--shadow-card); position:relative; overflow:hidden;
+      transition:border-color .4s, box-shadow .4s, transform .4s var(--spring);
+      animation:fadeUp .8s .4s var(--out) both;
+    }
+    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(0,255,200,0.35),rgba(14,165,255,0.3),transparent); }
+    .card::after { content:''; position:absolute; top:-200px; right:-200px; width:500px; height:500px; background:radial-gradient(circle,rgba(0,255,200,0.05) 0%,transparent 65%); pointer-events:none; animation:orb-spin 20s linear infinite; }
+    @keyframes orb-spin { 0%{transform:rotate(0deg) translateX(30px);} 100%{transform:rotate(360deg) translateX(30px);} }
+    .card:hover { border-color:var(--border-mid); box-shadow:var(--shadow-card),var(--glow); transform:translateY(-4px); }
+
+    /* ─── SECTION HEAD ─── */
+    .sec-head { display:flex; align-items:center; gap:14px; margin-bottom:36px; padding-bottom:20px; border-bottom:1px solid var(--border-dim); }
+    .sec-icon { width:46px; height:46px; background:linear-gradient(135deg,rgba(0,255,200,0.14),rgba(14,165,255,0.08)); border:1px solid var(--border-mid); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; font-size:1.2em; transition:all .35s var(--spring); }
+    .card:hover .sec-icon { transform:rotate(-10deg) scale(1.12); border-color:var(--border-bright); }
+    .sec-eyebrow { font-family:var(--font-mono); font-size:.62em; color:var(--teal); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:3px; }
+    .sec-title { font-family:var(--font-display); font-size:1.3em; font-weight:700; color:var(--text-bright); letter-spacing:-.3px; }
+
+    /* ─── FIELD LABEL ─── */
+    .field-lbl { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:.7em; color:var(--text-muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+    .field-lbl::before { content:''; width:3px; height:13px; background:var(--teal); border-radius:2px; box-shadow:0 0 7px var(--teal); }
+
+    /* ─── DROP ZONE ─── */
+    .drop-zone { position:relative; border:2px dashed var(--border-mid); border-radius:var(--radius-md); padding:52px 24px; text-align:center; cursor:pointer; transition:all .35s var(--out); background:rgba(0,255,200,0.02); overflow:hidden; }
+    .drop-zone::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at center,rgba(0,255,200,0.08) 0%,transparent 70%); opacity:0; transition:opacity .4s; }
+    .drop-zone:hover::before, .drop-zone.over::before { opacity:1; }
+    .drop-zone:hover, .drop-zone.over { border-color:var(--teal); border-style:solid; transform:translateY(-2px); box-shadow:0 0 30px rgba(0,255,200,0.14); }
+    .drop-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .drop-icon { font-size:3em; display:block; margin-bottom:16px; filter:drop-shadow(0 0 12px rgba(0,255,200,0.45)); animation:float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
+    .drop-main { font-family:var(--font-display); font-size:1.05em; font-weight:700; color:var(--text-bright); margin-bottom:6px; }
+    .drop-sub { font-size:.83em; color:var(--text-muted); }
+    .drop-sub span { color:var(--teal); font-weight:600; }
+
+    .file-chip { display:none; align-items:center; gap:10px; margin-top:14px; padding:10px 18px; background:rgba(0,255,200,0.09); border:1px solid var(--border-mid); border-radius:var(--radius-sm); font-size:.83em; color:var(--teal); font-weight:600; animation:slideDown .3s var(--spring); }
+    .file-chip.show { display:flex; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-10px);} to{opacity:1;transform:translateY(0);} }
+
+    /* ─── OR DIVIDER ─── */
+    .or-div { display:flex; align-items:center; gap:16px; margin:28px 0; color:var(--text-ghost); font-family:var(--font-mono); font-size:.72em; letter-spacing:3px; }
+    .or-div::before, .or-div::after { content:''; flex:1; height:1px; background:linear-gradient(to right,transparent,var(--border-mid),transparent); }
+
+    /* ─── URL INPUT ─── */
+    .inp-wrap { position:relative; }
+    .inp-wrap input[type=text] { width:100%; padding:18px 50px 18px 20px; background:rgba(0,255,200,0.03); border:1px solid var(--border-mid); border-radius:var(--radius-md); color:var(--text-bright); font-family:var(--font-body); font-size:.97em; transition:all .3s var(--out); }
+    .inp-wrap input[type=text]::placeholder { color:var(--text-ghost); }
+    .inp-wrap input[type=text]:focus { outline:none; border-color:var(--teal); background:rgba(0,255,200,0.05); box-shadow:0 0 0 4px rgba(0,255,200,0.09), 0 8px 24px rgba(0,0,0,0.35); transform:translateY(-1px); }
+    .inp-suffix { position:absolute; right:18px; top:50%; transform:translateY(-50%); color:var(--text-ghost); font-size:.9em; pointer-events:none; transition:color .3s; }
+    .inp-wrap:focus-within .inp-suffix { color:var(--teal); }
+
+    /* ─── SUBMIT BUTTON ─── */
+    .submit-btn { width:100%; padding:21px; margin-top:32px; background:transparent; border:1.5px solid var(--border-bright); border-radius:var(--radius-md); color:var(--text-bright); font-family:var(--font-display); font-size:1.05em; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; cursor:pointer; position:relative; overflow:hidden; transition:all .4s var(--out); }
+    .submit-btn::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--teal),var(--blue)); opacity:0; transition:opacity .4s; }
+    .submit-btn:hover::before { opacity:1; }
+    .submit-btn:hover { box-shadow:0 0 45px rgba(0,255,200,0.28), 0 12px 40px rgba(0,0,0,0.4); transform:translateY(-3px); }
+    .submit-btn:active { transform:translateY(0); }
+    .submit-btn:disabled { opacity:.38; cursor:not-allowed; transform:none; box-shadow:none; }
+    .submit-btn:disabled::before { opacity:.2; }
+    .btn-inner { position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:10px; }
+    .spin { width:16px; height:16px; border:2.5px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg);} }
+
+    /* ─── RESULT SECTION ─── */
+    #result { display:none; margin-top:40px; animation:fadeUp .6s var(--out) both; }
+    .res-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px; }
+    .res-food-name { font-family:var(--font-display); font-size:2em; font-weight:800; color:var(--text-bright); letter-spacing:-.5px; line-height:1.1; }
+    .conf-pill { padding:6px 16px; background:rgba(168,255,62,0.12); border:1px solid rgba(168,255,62,0.3); border-radius:100px; font-family:var(--font-mono); font-size:.72em; color:var(--lime); white-space:nowrap; align-self:flex-start; margin-top:6px; }
+    .res-serving { font-family:var(--font-mono); font-size:.75em; color:var(--text-muted); margin-bottom:24px; letter-spacing:.8px; }
+    .divline { height:1px; background:linear-gradient(90deg,transparent,var(--border-mid),transparent); margin:24px 0; }
+
+    /* ─── NUTRITION GRID ─── */
+    .nutr-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(148px,1fr)); gap:12px; margin-bottom:28px; }
+    .nutr-card {
+      background:rgba(255,255,255,0.04); border:1px solid var(--border-dim);
+      border-radius:var(--radius-md); padding:22px 16px; text-align:center;
+      position:relative; overflow:hidden; transition:all .3s var(--spring);
+      animation:fadeUp .5s var(--out) both;
+    }
+    .nutr-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2.5px; background:linear-gradient(90deg,var(--teal),var(--blue)); transform:scaleX(0); transform-origin:center; transition:transform .35s var(--spring); }
+    .nutr-card:hover { border-color:var(--border-mid); transform:translateY(-5px) scale(1.03); background:rgba(0,255,200,0.06); }
+    .nutr-card:hover::after { transform:scaleX(1); }
+    .nutr-icon { font-size:1.8em; display:block; margin-bottom:10px; filter:drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+    /* VISIBILITY FIX: label clearly visible */
+    .nutr-lbl { font-family:var(--font-mono); font-size:.68em; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:10px; }
+    /* VISIBILITY FIX: values are white, not hidden gradient */
+    .nutr-val { font-family:var(--font-display); font-size:1.5em; font-weight:800; color:var(--text-bright); line-height:1; }
+    .nutr-val.na { color:var(--text-ghost); font-size:1.1em; }
+    .nutr-unit { font-family:var(--font-mono); font-size:.46em; color:var(--teal); font-weight:400; display:block; margin-top:5px; letter-spacing:1px; }
+
+    /* ─── ADVICE BOX ─── */
+    .advice-box { background:linear-gradient(145deg,rgba(0,255,200,0.06),rgba(14,165,255,0.03)); border:1px solid rgba(0,255,200,0.18); border-radius:var(--radius-md); padding:30px; position:relative; overflow:hidden; }
+    .advice-box::before { content:''; position:absolute; top:0; left:0; width:3.5px; height:100%; background:linear-gradient(180deg,var(--teal),var(--blue)); border-radius:2px; }
+    .advice-lbl { display:flex; align-items:center; gap:9px; font-family:var(--font-display); font-size:.9em; font-weight:700; color:var(--teal); margin-bottom:16px; }
+    /* VISIBILITY FIX: advice text fully readable */
+    .advice-txt { color:var(--text-body); line-height:1.9; font-size:.97em; white-space:pre-wrap; font-weight:400; }
+
+    /* ─── PREVIEW IMAGE ─── */
+    #preview { display:none; width:100%; max-height:380px; object-fit:cover; border-radius:var(--radius-md); margin-top:32px; border:1px solid var(--border-mid); box-shadow:var(--shadow-card); transition:all .4s var(--spring); }
+    #preview.show { display:block; animation:fadeUp .6s var(--out) both; }
+    #preview:hover { transform:scale(1.015); box-shadow:var(--shadow-card),var(--glow); }
+
+    .error-box { padding:20px 24px; background:rgba(255,80,80,0.07); border:1px solid rgba(255,80,80,0.22); border-radius:var(--radius-md); color:#ffb3b3; font-size:.92em; animation:shake .4s ease-in-out; }
+    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+
+    /* ─── CHAT SECTION ─── */
+    .chat-sec { margin-top:32px; background:linear-gradient(145deg,rgba(17,22,41,0.95),rgba(11,15,30,0.98)); border:1px solid var(--border-dim); border-radius:var(--radius-lg); padding:48px; box-shadow:var(--shadow-card); position:relative; overflow:hidden; animation:fadeUp .8s .5s var(--out) both; }
+    .chat-sec::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(14,165,255,0.45),rgba(0,255,200,0.3),transparent); }
+    .chat-sec::after { content:''; position:absolute; bottom:-200px; left:-100px; width:600px; height:600px; background:radial-gradient(circle,rgba(14,165,255,0.05) 0%,transparent 70%); pointer-events:none; animation:orb-spin 25s linear infinite reverse; }
+
+    .chat-head { text-align:center; margin-bottom:36px; padding-bottom:24px; border-bottom:1px solid var(--border-dim); }
+    .chat-title { font-family:var(--font-display); font-size:2.1em; font-weight:800; color:var(--text-bright); letter-spacing:-1px; margin-bottom:8px; }
+    .chat-title span { color:var(--blue); }
+    .chat-sub { font-size:.9em; color:var(--text-muted); }
+    .ctx-tag { display:none; align-items:center; justify-content:center; gap:8px; font-family:var(--font-mono); font-size:.72em; color:var(--teal); margin-top:12px; }
+    .ctx-tag.show { display:flex; animation:fadeUp .4s var(--out) both; }
+    .ctx-tag::before { content:''; width:7px; height:7px; background:var(--teal); border-radius:50%; box-shadow:0 0 8px var(--teal); animation:blink 2s ease-in-out infinite; }
+
+    .chat-box { background:rgba(3,5,15,0.65); border:1px solid var(--border-dim); border-radius:var(--radius-md); padding:24px; min-height:360px; max-height:520px; overflow-y:auto; margin-bottom:20px; scroll-behavior:smooth; }
+    .chat-box::-webkit-scrollbar { width:6px; }
+    .chat-box::-webkit-scrollbar-track { background:transparent; }
+    .chat-box::-webkit-scrollbar-thumb { background:var(--border-mid); border-radius:6px; }
+
+    .chat-welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; height:290px; }
+    .welcome-icon { font-size:3em; margin-bottom:16px; filter:drop-shadow(0 0 14px rgba(14,165,255,0.45)); animation:float 4s ease-in-out infinite; }
+    /* VISIBILITY FIX: welcome text */
+    .chat-welcome p { font-size:.9em; line-height:1.75; max-width:300px; color:var(--text-muted); }
+
+    .chat-msg { display:flex; flex-direction:column; margin-bottom:18px; animation:fadeUp .35s var(--out) both; }
+    .chat-msg.user { align-items:flex-end; }
+    .chat-msg.bot  { align-items:flex-start; }
+    .msg-from { font-family:var(--font-mono); font-size:.62em; color:var(--text-muted); letter-spacing:1px; margin-bottom:6px; text-transform:uppercase; }
+    /* VISIBILITY FIX: chat bubbles */
+    .msg-bubble { max-width:76%; padding:14px 20px; border-radius:18px; font-size:.93em; line-height:1.75; white-space:pre-wrap; word-break:break-word; }
+    .chat-msg.user .msg-bubble { background:linear-gradient(135deg,rgba(0,255,200,0.17),rgba(14,165,255,0.12)); border:1px solid rgba(0,255,200,0.22); border-bottom-right-radius:4px; color:var(--text-bright); }
+    .chat-msg.bot .msg-bubble  { background:rgba(17,22,41,0.95); border:1px solid var(--border-mid); border-bottom-left-radius:4px; color:var(--text-body); }
+    .msg-err { background:rgba(255,80,80,0.09) !important; border-color:rgba(255,80,80,0.22) !important; color:#ffb3b3 !important; }
+
+    /* ─── TYPING INDICATOR ─── */
+    .typing-bub { display:inline-flex; align-items:center; gap:6px; padding:16px 22px; background:rgba(17,22,41,0.95); border:1px solid var(--border-dim); border-radius:18px; border-bottom-left-radius:4px; }
+    .t-dot { width:8px; height:8px; border-radius:50%; animation:tdot 1.4s ease-in-out infinite; }
+    .t-dot:nth-child(1){ background:var(--blue); box-shadow:0 0 8px var(--blue); }
+    .t-dot:nth-child(2){ background:var(--teal); box-shadow:0 0 8px var(--teal); animation-delay:.2s; }
+    .t-dot:nth-child(3){ background:var(--lime); box-shadow:0 0 8px var(--lime); animation-delay:.4s; }
+    @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4;} 30%{transform:translateY(-11px);opacity:1;} }
+
+    /* ─── CHAT INPUT ─── */
+    .chat-row { display:flex; gap:12px; align-items:center; }
+    .chat-field { flex:1; padding:16px 22px; background:rgba(0,255,200,0.03); border:1px solid var(--border-mid); border-radius:var(--radius-md); color:var(--text-bright); font-family:var(--font-body); font-size:.93em; transition:all .3s var(--out); }
+    .chat-field::placeholder { color:var(--text-ghost); }
+    .chat-field:focus { outline:none; border-color:var(--blue); background:rgba(14,165,255,0.05); box-shadow:0 0 0 4px rgba(14,165,255,0.09); }
+    .chat-send { padding:16px 28px; background:linear-gradient(135deg,rgba(14,165,255,0.16),rgba(0,255,200,0.1)); border:1px solid rgba(14,165,255,0.32); border-radius:var(--radius-md); color:#7ecfff; font-family:var(--font-display); font-size:.85em; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .3s var(--spring); white-space:nowrap; position:relative; overflow:hidden; }
+    .chat-send::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--blue),var(--teal)); opacity:0; transition:opacity .3s; }
+    .chat-send:hover::before { opacity:1; }
+    .chat-send:hover { color:var(--bg-void); transform:translateY(-2px); box-shadow:0 8px 24px rgba(14,165,255,0.32); }
+    .chat-send:active { transform:translateY(0); }
+    .chat-send:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+    .chat-send span { position:relative; z-index:1; }
+
+    /* ─── FOOTER ─── */
+    .footer { position:relative; z-index:1; border-top:1px solid var(--border-dim); margin-top:80px; padding:60px 40px 40px; background:rgba(3,5,15,0.7); backdrop-filter:blur(20px); }
+    .footer-inner { max-width:1360px; margin:0 auto; }
+    .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:48px; }
+    .footer-logo-row { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .f-hex { width:36px; height:36px; background:linear-gradient(135deg,var(--teal),var(--blue)); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:flex; align-items:center; justify-content:center; font-size:1em; }
+    .f-brand { font-family:var(--font-display); font-size:1.1em; font-weight:800; color:var(--text-bright); }
+    .f-brand span { color:var(--teal); }
+    .f-desc { font-size:.85em; color:var(--text-muted); line-height:1.8; margin-bottom:20px; max-width:280px; font-weight:300; }
+    .social-row { display:flex; gap:10px; }
+    .social-btn { width:38px; height:38px; background:rgba(0,255,200,0.04); border:1px solid var(--border-dim); border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center; color:var(--text-muted); text-decoration:none; font-size:.9em; transition:all .3s var(--spring); }
+    .social-btn:hover { background:rgba(0,255,200,0.12); border-color:var(--border-bright); color:var(--teal); transform:translateY(-3px); }
+    .f-col h4 { font-family:var(--font-display); font-size:.82em; font-weight:700; color:var(--text-bright); letter-spacing:1px; text-transform:uppercase; margin-bottom:18px; }
+    .f-col ul { list-style:none; }
+    .f-col ul li { margin-bottom:10px; }
+    .f-col ul li a { font-size:.85em; color:var(--text-muted); text-decoration:none; transition:color .25s, padding-left .25s; font-weight:300; }
+    .f-col ul li a:hover { color:var(--teal); padding-left:6px; }
+    .f-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:24px; border-top:1px solid var(--border-dim); flex-wrap:wrap; gap:16px; }
+    .f-copy { font-family:var(--font-mono); font-size:.72em; color:var(--text-ghost); }
+    .f-policy { display:flex; gap:24px; }
+    .f-policy a { font-family:var(--font-mono); font-size:.72em; color:var(--text-ghost); text-decoration:none; transition:color .25s; }
+    .f-policy a:hover { color:var(--teal); }
+
+    /* ─── SCROLL TOP ─── */
+    .scroll-top { position:fixed; bottom:32px; right:32px; width:48px; height:48px; background:rgba(11,15,30,0.92); border:1px solid var(--border-mid); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--teal); cursor:pointer; opacity:0; visibility:hidden; transform:translateY(16px); transition:all .4s var(--spring); z-index:900; backdrop-filter:blur(12px); box-shadow:0 0 20px rgba(0,255,200,0.12); }
+    .scroll-top.vis { opacity:1; visibility:visible; transform:translateY(0); }
+    .scroll-top:hover { border-color:var(--border-bright); box-shadow:0 0 30px rgba(0,255,200,0.28); transform:translateY(-4px); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px);} to{opacity:1;transform:translateY(0);} }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:1100px){ .footer-top{ grid-template-columns:1fr 1fr; } }
+    @media(max-width:900px){
+      .stats-bar{ grid-template-columns:1fr; }
+      .nav-links{ position:fixed; top:var(--nav-h); right:-100%; width:280px; height:calc(100dvh - var(--nav-h)); background:rgba(3,5,15,0.97); backdrop-filter:blur(30px); flex-direction:column; align-items:flex-start; padding:32px 24px; gap:8px; border-left:1px solid var(--border-mid); transition:right .4s var(--out); z-index:999; }
+      .nav-links.open{ right:0; }
+      .nav-links a{ width:100%; padding:12px 16px; font-size:1em; }
+      .mob-btn{ display:flex; }
+    }
+    @media(max-width:700px){
+      body{ cursor:auto; }
+      .cur-dot,.cur-ring{ display:none; }
+      .page-wrap{ padding:0 20px 80px; }
+      .hero{ padding:60px 0 50px; }
+      .hero-title{ font-size:2.4em; }
+      .card,.chat-sec{ padding:28px 22px; }
+      .nutr-grid{ grid-template-columns:repeat(2,1fr); }
+      .footer{ padding:48px 20px 32px; }
+      .footer-top{ grid-template-columns:1fr; gap:32px; }
+      .f-bottom{ flex-direction:column; align-items:center; text-align:center; }
+      .chat-row{ flex-direction:column; }
+      .chat-send{ width:100%; padding:16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cur-dot" id="curDot"></div>
+  <div class="cur-ring" id="curRing"></div>
+
+  <div class="aurora">
+    <div class="aurora-blob ab1"></div>
+    <div class="aurora-blob ab2"></div>
+    <div class="aurora-blob ab3"></div>
+    <div class="aurora-blob ab4"></div>
+  </div>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#home" class="nav-brand">
+        <div class="nav-hex">🌿</div>
+        <div class="nav-wordmark">
+          <div class="nav-name">Nutri<span>Nova</span></div>
+          <div class="nav-tag">AI · Nutrition Intelligence</div>
+        </div>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="active">Home</a></li>
+        <li><a href="#analyzer">Analyzer</a></li>
+        <li><a href="#chatbot">AI Chat</a></li>
+        <li id="authLinks"><a href="/auth" class="nav-cta"><span class="nav-cta-text">⚡ Login</span></a></li>
+        <li id="userMenu" style="display:none;"><a href="/profile-page"><i class="fas fa-user-circle"></i> Profile</a></li>
+        <li id="userMenuHistory" style="display:none;"><a href="#" onclick="showHistory()"><i class="fas fa-history"></i> History</a></li>
+        <li id="userMenuLogout" style="display:none;"><a href="#" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+      </ul>
+      <button class="mob-btn" id="mobBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="page-wrap" id="analyzer">
+
+    <section class="hero" id="home">
+      <div class="hero-eyebrow"><span class="live-dot"></span> Live Intelligence Platform</div>
+      <h1 class="hero-title">Decode Every<br><span class="grad">Bite You Take</span></h1>
+      <p class="hero-sub">Snap a photo, drop a URL — our AI reveals the complete nutritional universe inside your food, instantly.</p>
+      <div class="hero-badges">
+        <span class="badge"><i class="fas fa-brain"></i> Deep Learning</span>
+        <span class="badge"><i class="fas fa-database"></i> RAG-Enhanced</span>
+        <span class="badge"><i class="fas fa-bolt"></i> Real-time Analysis</span>
+        <span class="badge"><i class="fas fa-shield-halved"></i> Personalized Advice</span>
+      </div>
+    </section>
+
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-num">98<span>%</span></div><div class="stat-lbl">Accuracy Rate</div></div>
+      <div class="stat-cell"><div class="stat-num">500<span>+</span></div><div class="stat-lbl">Foods Recognized</div></div>
+      <div class="stat-cell"><div class="stat-num">0.8<span>s</span></div><div class="stat-lbl">Avg. Analysis Time</div></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-icon">📊</div>
+        <div>
+          <div class="sec-eyebrow">module_01</div>
+          <div class="sec-title">Food Image Analysis</div>
+        </div>
+      </div>
+
+      <form id="uploadForm">
+        <div style="margin-bottom:32px">
+          <div class="field-lbl">Upload Image</div>
+          <div class="drop-zone" id="dropZone">
+            <input type="file" id="image" name="image" accept="image/*" />
+            <span class="drop-icon">📸</span>
+            <div class="drop-main">Drop your food image here</div>
+            <div class="drop-sub">or <span>browse files</span> — JPG, PNG, WEBP</div>
+          </div>
+          <div class="file-chip" id="fileChip"><i class="fas fa-check-circle"></i><span id="chipName"></span></div>
+        </div>
+
+        <div class="or-div">or</div>
+
+        <div style="margin-bottom:8px">
+          <div class="field-lbl">Image URL</div>
+          <div class="inp-wrap">
+            <input type="text" id="imageUrl" name="url" placeholder="https://example.com/delicious-food.jpg" />
+            <span class="inp-suffix"><i class="fas fa-link"></i></span>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="analyzeBtn">
+          <span class="btn-inner"><i class="fas fa-microscope"></i> Analyze Nutrition</span>
+        </button>
+      </form>
+
+      <div id="result"></div>
+      <img id="preview" src="" alt="Food preview" />
+    </div>
+
+    <div class="chat-sec" id="chatbot">
+      <div class="chat-head">
+        <h2 class="chat-title">AI <span>Health</span> Expert</h2>
+        <p class="chat-sub">RAG-Enhanced Personalized Nutrition & Wellness Guidance</p>
+        <div class="ctx-tag" id="ctxTag"></div>
+      </div>
+      <div class="chat-box" id="chatBox">
+        <div class="chat-welcome">
+          <div class="welcome-icon">🧬</div>
+          <p>Ask anything about nutrition, diet planning, weight management, or healthy eating habits.</p>
+        </div>
+      </div>
+      <div class="chat-row">
+        <input type="text" class="chat-field" id="chatInput" placeholder="Ask about nutrition, meal plans, diet tips..." onkeypress="handleChatKey(event)" />
+        <button class="chat-send" id="chatSendBtn" onclick="sendChat()"><span>Send ↑</span></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <div class="footer-logo-row">
+            <div class="f-hex">🌿</div>
+            <div class="f-brand">Nutri<span>Nova</span> AI</div>
+          </div>
+          <p class="f-desc">Empowering your health journey with cutting-edge AI. Instant nutrition analysis, personalized dietary advice, and intelligent wellness guidance.</p>
+          <div class="social-row">
+            <a href="#" class="social-btn"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-btn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="social-btn"><i class="fab fa-github"></i></a>
+          </div>
+        </div>
+        <div class="f-col"><h4>Product</h4><ul><li><a href="#home">Home</a></li><li><a href="#analyzer">Food Analyzer</a></li><li><a href="#chatbot">AI Health Chat</a></li></ul></div>
+        <div class="f-col"><h4>Technology</h4><ul><li><a href="#">Deep Learning</a></li><li><a href="#">RAG System</a></li><li><a href="#">Nutrition Tracking</a></li></ul></div>
+        <div class="f-col"><h4>Contact</h4><ul><li><a href="mailto:info@nutrinova.ai">info@nutrinova.ai</a></li><li><a href="#">+1 (234) 567-890</a></li><li><a href="#">San Francisco, CA</a></li><li><a href="#">24/7 AI Support</a></li></ul></div>
+      </div>
+      <div class="f-bottom">
+        <div class="f-copy">© 2025 NutriNova AI. All rights reserved. Powered by Deep Learning & RAG.</div>
+        <div class="f-policy"><a href="#">Privacy Policy</a><a href="#">Terms</a><a href="#">Cookies</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="scroll-top" id="scrollTop"><i class="fas fa-arrow-up"></i></div>
+
+  <!-- History Modal -->
+  <div id="historyModal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(3,5,15,0.95); backdrop-filter:blur(10px); overflow-y:auto;">
+    <div style="max-width:1000px; margin:40px auto; padding:0 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+        <h2 style="font-family:var(--font-display); font-size:2em; color:var(--text-bright); font-weight:800;">
+          <i class="fas fa-history" style="color:var(--teal);"></i> Food Analysis History
+        </h2>
+        <button onclick="closeHistory()" style="background:none; border:1px solid var(--border-mid); color:var(--text-body); padding:10px 20px; border-radius:var(--radius-sm); cursor:pointer; font-size:1em; transition:all 0.3s;">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+      <div id="historyContent" style="min-height:300px;">
+        <p style="text-align:center; color:var(--text-muted); padding:60px 0;">Loading history...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ─── PARTICLE CANVAS with mouse repulsion ─── */
+    (function () {
+      const canvas = document.getElementById('bgCanvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, particles = [];
+      const COUNT = 90, MAX_D = 150;
+      const COLS = ['rgba(0,255,200,','rgba(14,165,255,','rgba(168,255,62,','rgba(176,110,255,'];
+      function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+      class P {
+        constructor() { this.init(true); }
+        init(r) { this.x=Math.random()*(W||innerWidth); this.y=r?Math.random()*(H||innerHeight):(H||innerHeight)+10; this.vx=(Math.random()-.5)*.4; this.vy=-Math.random()*.55-.1; this.r=Math.random()*2.2+.4; this.col=COLS[Math.floor(Math.random()*COLS.length)]; this.base=Math.random()*.45+.1; this.phase=Math.random()*Math.PI*2; }
+        draw() {
+          this.x+=this.vx; this.y+=this.vy; this.phase+=.018;
+          const a=this.base+Math.sin(this.phase)*.12;
+          if(this.y<-10||this.x<-10||this.x>W+10) this.init(false);
+          ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle=this.col+Math.max(0,a)+')'; ctx.fill();
+        }
+      }
+      function drawLines() {
+        for(let i=0;i<particles.length;i++) for(let j=i+1;j<particles.length;j++){
+          const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, d=Math.sqrt(dx*dx+dy*dy);
+          if(d<MAX_D){ ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle=`rgba(0,255,200,${(1-d/MAX_D)*.14})`; ctx.lineWidth=.6; ctx.stroke(); }
+        }
+      }
+      let mx=-9999, my=-9999;
+      document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+      function repulse() {
+        particles.forEach(p => {
+          const dx=p.x-mx, dy=p.y-my, d=Math.sqrt(dx*dx+dy*dy);
+          if(d<100){ const f=(100-d)/100*.8; p.vx+=(dx/d)*f; p.vy+=(dy/d)*f; p.vx*=.95; p.vy*=.95; }
+        });
+      }
+      function loop() { ctx.clearRect(0,0,W,H); drawLines(); repulse(); particles.forEach(p=>p.draw()); requestAnimationFrame(loop); }
+      window.addEventListener('resize', resize);
+      resize();
+      particles = Array.from({length:COUNT}, ()=>new P());
+      loop();
+    })();
+
+    /* ─── CUSTOM CURSOR ─── */
+    (function () {
+      const dot=document.getElementById('curDot'), ring=document.getElementById('curRing');
+      let mx=0,my=0,rx=0,ry=0;
+      document.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; dot.style.left=mx+'px'; dot.style.top=my+'px'; });
+      (function animR(){ rx+=(mx-rx)*.13; ry+=(my-ry)*.13; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animR); })();
+      document.querySelectorAll('a,button,.submit-btn,.chat-send,.drop-zone,.nutr-card').forEach(el=>{
+        el.addEventListener('mouseenter',()=>ring.classList.add('big'));
+        el.addEventListener('mouseleave',()=>ring.classList.remove('big'));
+      });
+    })();
+
+    /* ─── NAVBAR ─── */
+    const navbar=document.getElementById('navbar'), mobBtn=document.getElementById('mobBtn'), navLinks=document.getElementById('navLinks'), scrollTopBtn=document.getElementById('scrollTop');
+    window.addEventListener('scroll',()=>{ navbar.classList.toggle('scrolled',scrollY>40); scrollTopBtn.classList.toggle('vis',scrollY>300); });
+    mobBtn.addEventListener('click',()=>{ navLinks.classList.toggle('open'); mobBtn.classList.toggle('open'); });
+    document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>{ navLinks.classList.remove('open'); mobBtn.classList.remove('open'); }));
+
+    /* ─── DROP ZONE ─── */
+    const dropZone=document.getElementById('dropZone'), fileInput=document.getElementById('image'), fileChip=document.getElementById('fileChip'), chipName=document.getElementById('chipName'), imageUrlInput=document.getElementById('imageUrl');
+    ['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.add('over');}));
+    ['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.remove('over');}));
+    dropZone.addEventListener('drop',e=>{const f=e.dataTransfer.files;if(f.length){fileInput.files=f;setChip(f[0].name);}});
+    fileInput.addEventListener('change',e=>{if(e.target.files.length){setChip(e.target.files[0].name);imageUrlInput.value='';}});
+    imageUrlInput.addEventListener('input',()=>{if(imageUrlInput.value.trim()){fileInput.value='';fileChip.classList.remove('show');}});
+    function setChip(name){chipName.textContent=name;fileChip.classList.add('show');}
+
+    /* ─── FORM SUBMIT ─── */
+    const form=document.getElementById('uploadForm'), resultDiv=document.getElementById('result'), previewImg=document.getElementById('preview'), analyzeBtn=document.getElementById('analyzeBtn');
+    let lastFood=null;
+
+    form.onsubmit=async e=>{
+      e.preventDefault();
+      analyzeBtn.disabled=true;
+      analyzeBtn.innerHTML='<span class="btn-inner"><span class="spin"></span> Analyzing…</span>';
+      resultDiv.innerHTML=''; resultDiv.style.display='none';
+      previewImg.classList.remove('show');
+      const imgFile=fileInput.files[0], imgUrl=imageUrlInput.value.trim();
+      if(!imgFile&&!imgUrl){showErr('⚠️ Please upload an image or enter a URL.');resetBtn();return;}
+      try {
+        const fd=new FormData();
+        if(imgFile){ fd.append('image',imgFile); previewImg.src=URL.createObjectURL(imgFile); previewImg.classList.add('show'); }
+        else { fd.append('url',imgUrl); previewImg.src=imgUrl; previewImg.classList.add('show'); }
+        const res=await fetch('http://127.0.0.1:5000/recognize',{method:'POST',body:fd});
+        const data=await res.json();
+        if(data.error||!res.ok) showErr('❌ '+(data.error||'Failed to analyze. Please try again.'));
+        else showResults(data);
+      } catch{ showErr('❌ Connection error. Please ensure the backend is running on http://127.0.0.1:5000'); }
+      finally{ resetBtn(); }
+    };
+
+    function resetBtn(){ analyzeBtn.disabled=false; analyzeBtn.innerHTML='<span class="btn-inner"><i class="fas fa-microscope"></i> Analyze Nutrition</span>'; }
+    function showErr(msg){ resultDiv.innerHTML=`<div class="error-box">${msg}</div>`; resultDiv.style.display='block'; }
+    function sanitize(v){ return(v===null||v===undefined)?'Unknown':String(v); }
+    function escHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+    /* ───────────────────────────────────────────────────
+       DISPLAY RESULTS
+       Handles ALL common backend response shapes:
+         1. data.nutrients.calories  (nested)
+         2. data.calories            (flat root)
+         3. data.Calories            (capitalised)
+         4. data.nutrition.calories  (alt key)
+         5. data.nutrient_units      (unit lookup)
+    ─────────────────────────────────────────────────── */
+    function showResults(data) {
+      console.log('Backend response:', data);
+
+      const foodName  = sanitize(data.food || data.predicted_food || data.name || 'Unknown Food');
+      const confidence= parseFloat(data.confidence || data.confidence_score || 0);
+      const serving   = sanitize(data.serving || data.serving_size || 'per 100g');
+
+      // Pull nested nutrient object (whichever key exists)
+      const nested = data.nutrients || data.nutrition || data.nutritional_info || {};
+      const nutrients = nested; // Make nutrients accessible globally for logging
+
+      /* Universal getter: tries nested, then root, then capitalised */
+      function getN(key) {
+        const caps = key.charAt(0).toUpperCase() + key.slice(1);
+        for (const k of [key, caps]) {
+          if (nested[k] !== undefined && nested[k] !== null && nested[k] !== '') return nested[k];
+        }
+        for (const k of [key, caps]) {
+          const v = data[k];
+          if (v !== undefined && v !== null && v !== '' && typeof v !== 'object') return v;
+        }
+        return null;
+      }
+
+      /* Store food context for chatbot */
+      lastFood = {
+        food: foodName,
+        calories: getN('calories') ?? 'N/A',
+        protein:  getN('protein')  ?? 'N/A',
+        carbs:    getN('carbohydrates') || getN('carbs') || 'N/A',
+        fat:      getN('fat') || getN('total_fat') || 'N/A'
+      };
+
+      const ctxTag = document.getElementById('ctxTag');
+      ctxTag.textContent = `Analyzing: ${foodName} — ask me about it!`;
+      ctxTag.classList.add('show');
+
+      const defs = [
+        { keys:['calories'],                       icon:'🔥', label:'Calories',    unit:'kcal' },
+        { keys:['protein'],                        icon:'🥩', label:'Protein',     unit:'g'    },
+        { keys:['carbohydrates','carbs','carb'],   icon:'🍞', label:'Carbs',       unit:'g'    },
+        { keys:['fat','total_fat'],                icon:'🧈', label:'Fat',         unit:'g'    },
+        { keys:['fiber','dietary_fiber'],          icon:'🌾', label:'Fiber',       unit:'g'    },
+        { keys:['sugar','sugars'],                 icon:'🍬', label:'Sugar',       unit:'g'    },
+        { keys:['sodium'],                         icon:'🧂', label:'Sodium',      unit:'mg'   },
+        { keys:['cholesterol'],                    icon:'🥚', label:'Cholesterol', unit:'mg'   }
+      ];
+
+      function resolve(keys) { for(const k of keys){ const v=getN(k); if(v!==null) return v; } return null; }
+
+      const gridHTML = defs.map((n,i) => {
+        const raw   = resolve(n.keys);
+        const isNA  = raw===null || raw===undefined || String(raw).trim()==='';
+        const display = isNA ? 'N/A' : raw;
+        const unitStr = isNA ? '' : n.unit;
+        return `
+          <div class="nutr-card" style="animation-delay:${i*.07}s">
+            <span class="nutr-icon">${n.icon}</span>
+            <div class="nutr-lbl">${n.label}</div>
+            <div class="nutr-val${isNA?' na':''}">${display}<span class="nutr-unit">${unitStr}</span></div>
+          </div>`;
+      }).join('');
+
+      const advice = data.dietary_advice || data.advice || data.recommendations || 'Dietary advice not available.';
+
+      resultDiv.innerHTML = `
+        <div class="res-header">
+          <div class="res-food-name">${escHtml(foodName)}</div>
+          <span class="conf-pill">${confidence.toFixed(1)}% match</span>
+        </div>
+        <div class="res-serving">↳ Serving: ${escHtml(serving)}</div>
+        <div class="divline"></div>
+        <div class="nutr-grid">${gridHTML}</div>
+        <div class="divline"></div>
+        <div class="advice-box">
+          <div class="advice-lbl"><i class="fas fa-robot"></i> AI Dietary Analysis</div>
+          <div class="advice-txt">${escHtml(advice)}</div>
+          ${currentUser ? `
+            <button onclick="logThisFood('${escHtml(foodName)}', ${nutrients.calories !== 'N/A' ? nutrients.calories : 0})" 
+                    style="margin-top:16px; padding:12px 24px; background:linear-gradient(135deg, var(--lime), #7cff00); border:none; border-radius:var(--radius-sm); color:var(--bg-void); font-family:var(--font-display); font-weight:700; cursor:pointer; transition:all 0.3s; display:flex; align-items:center; gap:8px; font-size:0.95em;">
+              <i class="fas fa-check-circle"></i> I'm Eating This
+            </button>
+          ` : ''}
+        </div>`;
+      resultDiv.style.display = 'block';
+    }
+
+    /* ─── CHATBOT ─── */
+    const chatBox=document.getElementById('chatBox'), chatInput=document.getElementById('chatInput'), chatSendBtn=document.getElementById('chatSendBtn');
+    function handleChatKey(e){ if(e.key==='Enter') sendChat(); }
+
+    async function sendChat(){
+      const msg=chatInput.value.trim(); if(!msg)return;
+      chatInput.value=''; chatSendBtn.disabled=true;
+      const welcome=chatBox.querySelector('.chat-welcome'); if(welcome)welcome.remove();
+      addMsg(msg,'user');
+      const tid='t'+Date.now(); addTyping(tid);
+      try {
+        const body={message:msg}; if(lastFood)body.food_context=lastFood;
+        const res=await fetch('http://127.0.0.1:5000/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const data=await res.json(); removeTyping(tid);
+        if(data.error||!res.ok) addMsg('❌ '+(data.error||'An error occurred.'),'bot',true);
+        else addMsg(data.response,'bot');
+      } catch{ removeTyping(tid); addMsg('❌ Connection error. Please ensure the backend is running on http://127.0.0.1:5000','bot',true); }
+      finally{ chatSendBtn.disabled=false; chatInput.focus(); }
+    }
+
+    function addMsg(text,sender,isErr=false){
+      const wrap=document.createElement('div'); wrap.className=`chat-msg ${sender}`;
+      wrap.innerHTML=`<div class="msg-from">${sender==='user'?'You':'🩺 Health Expert'}</div><div class="msg-bubble${isErr?' msg-err':''}">${escHtml(text)}</div>`;
+      chatBox.appendChild(wrap); chatBox.scrollTop=chatBox.scrollHeight;
+    }
+    function addTyping(id){
+      const wrap=document.createElement('div'); wrap.className='chat-msg bot'; wrap.id=id;
+      wrap.innerHTML=`<div class="msg-from">🩺 Health Expert</div><div class="typing-bub"><span class="t-dot"></span><span class="t-dot"></span><span class="t-dot"></span></div>`;
+      chatBox.appendChild(wrap); chatBox.scrollTop=chatBox.scrollHeight;
+    }
+    function removeTyping(id){ const el=document.getElementById(id); if(el)el.remove(); }
+
+    scrollTopBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+    document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{ const t=document.querySelector(a.getAttribute('href')); if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});} }));
+
+    /* ─── AUTHENTICATION & HISTORY ─── */
+    const API_URL = 'http://127.0.0.1:5000';
+    let currentUser = null;
+
+    // Check authentication status on page load
+    window.addEventListener('load', checkAuthStatus);
+
+    async function checkAuthStatus() {
+      try {
+        const response = await fetch(`${API_URL}/check-auth`);
+        const data = await response.json();
+        
+        if (data.logged_in) {
+          currentUser = data.username;
+          showUserMenu();
+        } else {
+          currentUser = null;
+          showGuestMenu();
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        showGuestMenu();
+      }
+    }
+
+    function showUserMenu() {
+      document.getElementById('authLinks').style.display = 'none';
+      document.getElementById('userMenu').style.display = 'block';
+      document.getElementById('userMenuHistory').style.display = 'block';
+      document.getElementById('userMenuLogout').style.display = 'block';
+    }
+
+    function showGuestMenu() {
+      document.getElementById('authLinks').style.display = 'block';
+      document.getElementById('userMenu').style.display = 'none';
+      document.getElementById('userMenuHistory').style.display = 'none';
+      document.getElementById('userMenuLogout').style.display = 'none';
+    }
+
+    async function handleLogout() {
+      if (!confirm('Are you sure you want to logout?')) return;
+      
+      try {
+        await fetch(`${API_URL}/logout`, { method: 'POST' });
+        currentUser = null;
+        showGuestMenu();
+        alert('Logged out successfully!');
+        window.location.reload();
+      } catch (error) {
+        alert('Logout failed. Please try again.');
+      }
+    }
+
+    async function showHistory() {
+      const modal = document.getElementById('historyModal');
+      const content = document.getElementById('historyContent');
+      modal.style.display = 'block';
+      content.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:60px 0;">Loading history...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/history`);
+        const data = await response.json();
+        
+        if (response.ok && data.history.length > 0) {
+          displayHistory(data.history);
+        } else {
+          content.innerHTML = `
+            <div style="text-align:center; padding:80px 20px;">
+              <i class="fas fa-utensils" style="font-size:4em; color:var(--text-ghost); margin-bottom:20px;"></i>
+              <p style="color:var(--text-muted); font-size:1.1em;">No food analysis history yet.</p>
+              <p style="color:var(--text-ghost); font-size:0.9em; margin-top:10px;">Start analyzing foods to see your history here!</p>
+            </div>`;
+        }
+      } catch (error) {
+        content.innerHTML = `
+          <div style="text-align:center; padding:60px 20px;">
+            <p style="color:#ffb3b3;">Failed to load history. Please try again.</p>
+          </div>`;
+      }
+    }
+
+    function displayHistory(history) {
+      const content = document.getElementById('historyContent');
+      
+      const historyHTML = history.map(item => {
+        const date = new Date(item.analyzed_at);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        return `
+          <div style="background:rgba(17,22,41,0.95); border:1px solid var(--border-dim); border-radius:var(--radius-md); padding:24px; margin-bottom:16px; transition:all 0.3s;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3 style="font-family:var(--font-display); font-size:1.4em; color:var(--text-bright); font-weight:700; margin-bottom:4px;">
+                  ${escapeHtml(item.food_name)}
+                </h3>
+                <p style="font-family:var(--font-mono); font-size:0.75em; color:var(--text-muted);">
+                  <i class="fas fa-clock"></i> ${formattedDate}
+                </p>
+              </div>
+              <span style="padding:6px 14px; background:rgba(168,255,62,0.12); border:1px solid rgba(168,255,62,0.3); border-radius:100px; font-family:var(--font-mono); font-size:0.75em; color:var(--lime); white-space:nowrap;">
+                ${item.confidence ? item.confidence.toFixed(1) : 'N/A'}% match
+              </span>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin-bottom:16px;">
+              ${createNutrientCard('🔥', 'Calories', item.calories, 'kcal')}
+              ${createNutrientCard('🥩', 'Protein', item.protein, 'g')}
+              ${createNutrientCard('🧈', 'Fat', item.fat, 'g')}
+              ${createNutrientCard('🍞', 'Carbs', item.carbohydrates, 'g')}
+            </div>
+            
+            ${item.dietary_advice ? `
+              <div style="background:linear-gradient(145deg,rgba(0,255,200,0.06),rgba(14,165,255,0.03)); border:1px solid rgba(0,255,200,0.18); border-radius:var(--radius-sm); padding:16px; position:relative;">
+                <div style="display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:0.85em; font-weight:700; color:var(--teal); margin-bottom:8px;">
+                  <i class="fas fa-robot"></i> AI Analysis
+                </div>
+                <p style="color:var(--text-body); line-height:1.7; font-size:0.9em; white-space:pre-wrap;">${escapeHtml(item.dietary_advice)}</p>
+              </div>
+            ` : ''}
+          </div>`;
+      }).join('');
+      
+      content.innerHTML = historyHTML;
+    }
+
+    function createNutrientCard(icon, label, value, unit) {
+      const isNA = !value || value === 'N/A' || value === 'null';
+      const displayValue = isNA ? 'N/A' : value;
+      const unitDisplay = isNA ? '' : unit;
+      
+      return `
+        <div style="background:rgba(255,255,255,0.04); border:1px solid var(--border-dim); border-radius:var(--radius-sm); padding:14px; text-align:center;">
+          <div style="font-size:1.5em; margin-bottom:6px;">${icon}</div>
+          <div style="font-family:var(--font-mono); font-size:0.65em; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px;">${label}</div>
+          <div style="font-family:var(--font-display); font-size:1.2em; font-weight:800; color:${isNA ? 'var(--text-ghost)' : 'var(--text-bright)'};">
+            ${displayValue}<span style="font-size:0.5em; color:var(--teal); font-weight:400;"> ${unitDisplay}</span>
+          </div>
+        </div>`;
+    }
+
+    function closeHistory() {
+      document.getElementById('historyModal').style.display = 'none';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeHistory();
+      }
+    });
+
+    /* ─── CALORIE TRACKING ─── */
+    async function logThisFood(foodName, calories) {
+      if (!currentUser) {
+        alert('Please log in to track calories!');
+        return;
+      }
+
+      // Parse calories value
+      const calValue = parseFloat(calories);
+      const isValidCal = !isNaN(calValue) && calValue > 0;
+      
+      const confirmMsg = isValidCal 
+        ? `Log "${foodName}" (${calValue} kcal) to your daily calorie tracker?`
+        : `Log "${foodName}" to your daily calorie tracker?`;
+      
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const response = await fetch(`${API_URL}/log-food`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            food_name: foodName,
+            calories: isValidCal ? calValue : 0
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Show success with calorie info
+          const remainingMsg = data.remaining_calories >= 0 
+            ? `${data.remaining_calories.toFixed(0)} kcal remaining today`
+            : `You've exceeded your target by ${Math.abs(data.remaining_calories).toFixed(0)} kcal`;
+          
+          alert(`✅ ${data.message}\n\n📊 Total: ${data.total_calories.toFixed(0)} / ${data.target_calories.toFixed(0)} kcal\n🎯 ${remainingMsg}`);
+        } else {
+          alert('❌ ' + (data.error || 'Failed to log food'));
+        }
+      } catch (error) {
+        console.error('Log food error:', error);
+        alert('❌ Connection error. Please ensure the server is running.');
+      }
+    }
+
+    async function loadCalorieMeter() {
+      const content = document.getElementById('historyContent');
+      
+      try {
+        const response = await fetch(`${API_URL}/calorie-today`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error('Failed to load calorie data');
+        }
+
+        displayCalorieDashboard(data);
+      } catch (error) {
+        console.error('Calorie meter error:', error);
+        content.innerHTML = `
+          <div style="text-align:center; padding:60px 20px;">
+            <p style="color:#ffb3b3;">Failed to load calorie tracker. Please try again.</p>
+          </div>`;
+      }
+    }
+
+    function displayCalorieDashboard(data) {
+      const content = document.getElementById('historyContent');
+      
+      const progressColor = data.progress_percentage > 100 ? '#ff5050' : 
+                           data.progress_percentage > 85 ? '#ffa500' : '#00ffc8';
+      
+      const statusMessage = data.progress_percentage > 100 
+        ? '⚠️ You\'ve exceeded your target!'
+        : data.progress_percentage > 85
+        ? '⚡ Almost at your limit!'
+        : '✅ On track!';
+      
+      const dashboardHTML = `
+        <div style="background:linear-gradient(145deg,rgba(17,22,41,0.95),rgba(11,15,30,0.98)); border:1px solid var(--border-dim); border-radius:var(--radius-lg); padding:32px; margin-bottom:32px; box-shadow:0 24px 60px rgba(0,0,0,0.7);">
+          <h3 style="font-family:var(--font-display); font-size:1.8em; color:var(--text-bright); font-weight:800; margin-bottom:24px; text-align:center;">
+            <i class="fas fa-fire" style="color:var(--teal);"></i> Today's Calorie Tracker
+          </h3>
+          
+          <!-- Progress Bar -->
+          <div style="margin-bottom:32px;">
+            <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:12px;">
+              <div>
+                <div style="font-family:var(--font-mono); font-size:0.75em; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">Actual Intake</div>
+                <div style="font-family:var(--font-display); font-size:2.5em; font-weight:800; color:${progressColor};">${data.actual_calories.toFixed(0)}</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:var(--font-mono); font-size:0.75em; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">Target</div>
+                <div style="font-family:var(--font-display); font-size:2.5em; font-weight:800; color:var(--text-bright);">${data.target_calories.toFixed(0)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-family:var(--font-mono); font-size:0.75em; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">Remaining</div>
+                <div style="font-family:var(--font-display); font-size:2.5em; font-weight:800; color:${data.remaining_calories >= 0 ? 'var(--lime)' : '#ff5050'};">${data.remaining_calories.toFixed(0)}</div>
+              </div>
+            </div>
+            
+            <!-- Progress Bar Visual -->
+            <div style="background:rgba(255,255,255,0.05); border-radius:100px; height:32px; overflow:hidden; position:relative; border:1px solid var(--border-dim);">
+              <div style="width:${Math.min(data.progress_percentage, 100)}%; height:100%; background:linear-gradient(90deg, ${progressColor}, ${data.progress_percentage > 100 ? '#ff5050' : progressColor}); transition:width 0.6s ease; display:flex; align-items:center; justify-content:center; position:relative;">
+                <span style="font-family:var(--font-display); font-size:0.85em; font-weight:700; color:${data.progress_percentage > 50 ? 'var(--bg-void)' : 'var(--text-bright)'}; z-index:1;">${data.progress_percentage.toFixed(1)}%</span>
+              </div>
+            </div>
+            
+            <div style="text-align:center; margin-top:12px; font-family:var(--font-body); font-size:0.95em; color:${progressColor}; font-weight:600;">
+              ${statusMessage}
+            </div>
+          </div>
+          
+          ${!data.has_profile ? `
+            <div style="background:rgba(255,165,0,0.07); border:1px solid rgba(255,165,0,0.22); border-radius:var(--radius-md); padding:16px; text-align:center; margin-bottom:24px;">
+              <p style="color:#ffa500; font-size:0.9em;">
+                <i class="fas fa-info-circle"></i> Complete your profile for personalized calorie targets!
+                <a href="/profile-page" style="color:var(--teal); text-decoration:underline; margin-left:8px;">Update Profile</a>
+              </p>
+            </div>
+          ` : ''}
+          
+          <!-- Foods Eaten Today -->
+          ${data.foods_eaten && data.foods_eaten.length > 0 ? `
+            <div style="border-top:1px solid var(--border-dim); padding-top:24px;">
+              <h4 style="font-family:var(--font-display); font-size:1.1em; color:var(--text-bright); font-weight:700; margin-bottom:16px;">
+                <i class="fas fa-list-check" style="color:var(--teal);"></i> Foods Logged Today (${data.foods_eaten.length})
+              </h4>
+              <div style="max-height:300px; overflow-y:auto;">
+                ${data.foods_eaten.map((food, idx) => `
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid var(--border-dim); border-radius:var(--radius-sm); margin-bottom:8px; animation:fadeUp 0.3s ease ${idx * 0.05}s both;">
+                    <div>
+                      <div style="font-family:var(--font-display); font-size:0.95em; color:var(--text-bright); font-weight:600;">${escapeHtml(food.name)}</div>
+                      <div style="font-family:var(--font-mono); font-size:0.7em; color:var(--text-muted); margin-top:2px;">
+                        <i class="fas fa-clock"></i> ${food.logged_at}
+                      </div>
+                    </div>
+                    <div style="font-family:var(--font-display); font-size:1.1em; font-weight:700; color:var(--teal);">
+                      ${food.calories > 0 ? food.calories.toFixed(0) + ' kcal' : '-'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : `
+            <div style="border-top:1px solid var(--border-dim); padding-top:24px; text-align:center;">
+              <i class="fas fa-utensils" style="font-size:3em; color:var(--text-ghost); margin-bottom:12px;"></i>
+              <p style="color:var(--text-muted); font-size:0.95em;">No foods logged yet today.</p>
+              <p style="color:var(--text-ghost); font-size:0.85em; margin-top:8px;">Analyze a food and click "I'm Eating This" to track it!</p>
+            </div>
+          `}
+        </div>
+        
+        <!-- History Section Below -->
+        <div style="border-top:2px solid var(--border-dim); padding-top:32px; margin-top:32px;">
+          <h3 style="font-family:var(--font-display); font-size:1.5em; color:var(--text-bright); font-weight:700; margin-bottom:24px;">
+            <i class="fas fa-history" style="color:var(--blue);"></i> Analysis History
+          </h3>
+        </div>
+      `;
+      
+      content.innerHTML = dashboardHTML;
+      
+      // Now load history below the calorie meter
+      loadHistoryBelow();
+    }
+
+    async function loadHistoryBelow() {
+      try {
+        const response = await fetch(`${API_URL}/history`);
+        const data = await response.json();
+        
+        if (response.ok && data.history && data.history.length > 0) {
+          const historyContainer = document.querySelector('#historyContent > div:last-child');
+          if (historyContainer) {
+            const historyHTML = data.history.slice(0, 10).map(item => {
+              const date = new Date(item.analyzed_at);
+              const formattedDate = date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              
+              return `
+                <div style="background:rgba(17,22,41,0.95); border:1px solid var(--border-dim); border-radius:var(--radius-md); padding:20px; margin-bottom:12px; transition:all 0.3s;">
+                  <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div>
+                      <h4 style="font-family:var(--font-display); font-size:1.2em; color:var(--text-bright); font-weight:700; margin-bottom:4px;">
+                        ${escapeHtml(item.food_name)}
+                      </h4>
+                      <p style="font-family:var(--font-mono); font-size:0.7em; color:var(--text-muted);">
+                        <i class="fas fa-clock"></i> ${formattedDate}
+                      </p>
+                    </div>
+                    <span style="padding:4px 12px; background:rgba(168,255,62,0.12); border:1px solid rgba(168,255,62,0.3); border-radius:100px; font-family:var(--font-mono); font-size:0.7em; color:var(--lime); white-space:nowrap;">
+                      ${item.confidence ? item.confidence.toFixed(1) : 'N/A'}%
+                    </span>
+                  </div>
+                  
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px;">
+                    ${createNutrientCard('🔥', 'Cal', item.calories, '')}
+                    ${createNutrientCard('🥩', 'Pro', item.protein, 'g')}
+                    ${createNutrientCard('🧈', 'Fat', item.fat, 'g')}
+                    ${createNutrientCard('🍞', 'Carb', item.carbohydrates, 'g')}
+                  </div>
+                </div>`;
+            }).join('');
+            
+            historyContainer.innerHTML += historyHTML;
+          }
+        }
+      } catch (error) {
+        console.error('History load error:', error);
+      }
+    }
+
+    // Override showHistory to load calorie meter first
+    const originalShowHistory = showHistory;
+    showHistory = async function() {
+      const modal = document.getElementById('historyModal');
+      const content = document.getElementById('historyContent');
+      modal.style.display = 'block';
+      content.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:60px 0;">Loading calorie tracker...</p>';
+      
+      await loadCalorieMeter();
+    };
+  </script>
+</body>
+</html>

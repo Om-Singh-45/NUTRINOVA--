@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Database files (optional - remove if you want to track)
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+rag_cache/
+*.pkl
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# Test files
+test_*.py

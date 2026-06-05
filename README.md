@@ -38,7 +38,9 @@ graph TD
     Flask <-->|Context Retrieval & Filters| RAG
     RAG <-->|Load & Chunk Texts| KB
     RAG <-->|Serialize & Retrieve Embeddings| FAISS
+```
 
+---
 
 ## 🌟 Key Features
 
@@ -67,65 +69,70 @@ Follow these steps to set up and run the project locally.
 Ensure that Python 3.10 or higher is installed on your computer. You can check your Python version using:
 ```bash
 python --version
+```
 
-
-Step 2: Clone the Project Directory
+### Step 2: Clone the Project Directory
 Navigate to the directory containing the project:
-
-bash
-
-
+```bash
 git clone <your-repository-url>
 cd NUTRINOVA--
-Step 3: Install Required Dependencies
-All required libraries are listed in requirements.txt. Run the following command to install them:
+```
 
-bash
-
-
+### Step 3: Install Required Dependencies
+All required libraries are listed in `requirements.txt`. Run the following command to install them:
+```bash
 pip install -r requirements.txt
-Note: Installing PyTorch and transformers may take a few minutes depending on your network connection.
+```
+*Note: Installing PyTorch and transformers may take a few minutes depending on your network connection.*
 
-##🔑 API Key Configuration
+---
+
+## 🔑 API Key Configuration
+
 NutriNova AI relies on two API integrations. To configure them:
 
-Google Gemini API Key:
+### 1. Google Gemini API Key
+*   Visit the [Google AI Studio](https://aistudio.google.com/) and generate a free API key.
+*   Open `app.py` and update the `GEMINI_API_KEY` variable on line 193:
+    ```python
+    GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+    ```
+*   Also update `test_gemini_api.py` on line 7:
+    ```python
+    GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+    ```
 
-Visit the Google AI Studio and generate a free API key.
-Open app.py and update the GEMINI_API_KEY variable on line 193:
-python
+### 2. USDA FoodData Central API Key
+*   Register at the [USDA API Portal](https://api.nal.usda.gov/) to get a free API Key.
+*   Open `app.py` and update the `USDA_API_KEY` variable on line 188:
+    ```python
+    USDA_API_KEY = "YOUR_USDA_API_KEY"
+    ```
 
+---
 
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-Also update test_gemini_api.py on line 7:
-python
+## 🚀 Execution Guide
 
+1.  **Launch the Application**:
+    Run the Flask development server:
+    ```bash
+    python app.py
+    ```
+2.  **Database & Index Initialization**:
+    On startup, the system will automatically:
+    *   Initialize the SQLite tables in `nutrition_app.db`.
+    *   Chunk the text guidelines located in `nutrition_knowledge/` and compile the FAISS vector database.
+3.  **Access the Dashboard**:
+    Open your browser and navigate to:
+    ```
+    http://127.0.0.1:5000
+    ```
 
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-USDA FoodData Central API Key:
+---
 
-Register at the USDA API Portal to get a free API Key.
-Open app.py and update the USDA_API_KEY variable on line 188:
-python
+## 📂 Project Structure
 
-
-USDA_API_KEY = "YOUR_USDA_API_KEY"
-
-##🚀 Execution Guide
-Launch the Application: Run the Flask development server:
-bash
-
-
-python app.py
-Database & Index Initialization: On startup, the system will automatically:
-Initialize the SQLite tables in nutrition_app.db.
-Chunk the text guidelines located in nutrition_knowledge/ and compile the FAISS vector database.
-Access the Dashboard: Open your browser and navigate to:
-http://127.0.0.1:5000
-
-
-##📂 Project Structure
-
+```
 Major Project/
 │
 ├── app.py                      # Main Flask Backend Server
@@ -147,11 +154,9 @@ Major Project/
 │
 ├── rag_cache/                  # Cached FAISS Indices & Document Pickles
 └── test_gemini_api.py          # Gemini API Diagnostic Script
+```
 
+---
 
-##⚖️ License & Disclaimers
+## ⚖️ License & Disclaimers
 This software is built for educational and academic assessment purposes. While the chatbot utilizes state-of-the-art LLMs and RAG architectures, it is not a replacement for professional medical advice, diagnosis, or treatment. Always consult with a qualified health professional regarding clinical conditions.
-
-
-
-
